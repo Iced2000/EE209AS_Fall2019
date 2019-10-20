@@ -98,8 +98,8 @@ class Environment(object):
 
     # 1(c)
     def transProb(self, pe, s, a, sp):
-        assert(pe <= 0.5 and s in self.getStates())
-        assert(a in self.getActions() and sp in self.getStates())
+        #assert(pe <= 0.5 and s in self.getStates())
+        #assert(a in self.getActions() and sp in self.getStates())
 
         spCandi = self.getNextStateCandi(s, a)
 
@@ -130,7 +130,7 @@ class Environment(object):
 
     # 2(a)
     def reward(self, s):
-        assert(s in self.getStates())
+        #assert(s in self.getStates())
 
         if s[0]%7 == 0 or s[1]%7 == 0:
             return -100
@@ -143,4 +143,6 @@ class Environment(object):
 
 env = Environment(8, 8)
 
-#print(env.step(0.5, (1, 1, 1), (Motion.forwards, Rotation.right)))
+#for s in env.getStates():
+#    for a in env.getActions():
+#        print(s, a, env.step(0, s, a))
