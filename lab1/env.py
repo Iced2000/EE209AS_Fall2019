@@ -35,6 +35,9 @@ class Environment(object):
         self.stateLen = len(self.state)
         self.actionLen = len(self.action)
 
+        # given s and a, the candidate of next state and prob
+        self.nextStateCandi = dict()
+
     # 1(a)
     def getStates(self):
         return self.state
@@ -49,11 +52,7 @@ class Environment(object):
     def getActionLen(self):
         return self.actionLen
 
-    # 1(c)
-    def transProb(self, pe, s, a, sp):
-        assert(pe <= 0.5 and s in self.getStates())
-        assert(a in self.getActions() and sp in self.getStates())
-
+    def getNextStateCandi(self, s, a):
         def clock2xy(clk, mot):
             xy = np.zeros(2).astype(int)
             direction = 1 if mot == Motion.forwards else -1
@@ -80,18 +79,43 @@ class Environment(object):
             postClk = rotate(preClk, a[1])
             return (*list(xy), postClk)
 
+        try:
+            return self.nextStateCandi[(s, a)][0]
+        except:
+            # stand still
+            if a[0] == Motion.none:
+                self.nextStateCandi[(s, a)] = [[s], [1]]
+                return [s]
+            # pre-rotation
+            else:
+                xy = np.array(s[0:2])
+                nsc = []
+                for r in Rotation:
+                    nsc.append(act(xy, rotate(s[2], r), a))
+                # True means normal, False means pre-rotation error
+                self.nextStateCandi[(s, a)] = [nsc, [True, False, False]]
+                return nsc
+
+    # 1(c)
+    def transProb(self, pe, s, a, sp):
+        assert(pe <= 0.5 and s in self.getStates())
+        assert(a in self.getActions() and sp in self.getStates())
+
+        spCandi = self.getNextStateCandi(s, a)
+
         # stand still
         if a[0] == Motion.none:
-            return int(s == sp)
+            if sp in spCandi:
+                return 1
+            else:
+                return 0
 
-        # pre-rotation error
-        xy = np.array(s[0:2])
-        if sp == act(xy, rotate(s[2], Rotation.none), a):
-            return 1 - 2 * pe
-        elif sp == act(xy, rotate(s[2], Rotation.left), a):
-            return pe
-        elif sp == act(xy, rotate(s[2], Rotation.right), a):
-            return pe
+        # pre-rotation
+        if sp in spCandi:
+            if self.nextStateCandi[(s, a)][1][spCandi.index(sp)]:
+                return 1 - 2 * pe
+            else:
+                return pe
         else:
             return 0
 
@@ -118,4 +142,4 @@ class Environment(object):
 
 env = Environment(8, 8)
 
-print(env.step(0.5, (1, 1, 1), (Motion.forwards, Rotation.left)))
+print(env.step(0.5, (1, 1, 1), (Motion.forwards, Rotation.right)))
