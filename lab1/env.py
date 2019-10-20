@@ -122,10 +122,11 @@ class Environment(object):
     # 1(d)
     def step(self, pe, s, a):
         prob = []
-        for state in self.state:
-            prob.append(self.transProb(pe, s, a, state))
-        stateIdx = np.random.choice(range(self.getStateLen()), 1, p=prob)
-        return self.getStates()[stateIdx[0]]
+        nextStateCandi = self.getNextStateCandi(s, a)
+        for nsc in nextStateCandi:
+            prob.append(self.transProb(pe, s, a, nsc))
+        stateIdx = np.random.choice(range(len(nextStateCandi)), 1, p=prob)
+        return nextStateCandi[stateIdx[0]]
 
     # 2(a)
     def reward(self, s):
