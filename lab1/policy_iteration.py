@@ -44,6 +44,7 @@ def gen_traj(e, pi, s0, pe):
     while s[0:2] != (5, 6):
         a = pi[s]
         s = e.step(pe, s, a)
+        print(s)
         traj.append(s)
     plotTraj(traj)
     return traj
@@ -102,11 +103,11 @@ def expectation(e, s, a, V, pe, l):
 def policy_eval(e, pi, pe, l):
     V1 = np.zeros((e.L, e.W, 12))
     V2 = np.zeros((e.L, e.W, 12))
-    threshold = 0.01
+    threshold = 1e-1
     converge = False
     while ~converge:
         for s in e.getStates():
-            print(s)
+            #print(s)
             a = pi[s]
             V2[s] = expectation(e, s, a, V1, pe, l)
         converge = (abs(V1-V2) < threshold).all()
@@ -115,8 +116,8 @@ def policy_eval(e, pi, pe, l):
 
 # 3(e)
 V = policy_eval(e, pi0, 0, 0.9)
-for stt in e.getStates():
-    print(V[stt])
+#for stt in e.getStates():
+#    print(stt, V[stt])
 
 # 3(f)
 def policy_refine(e, pe, l, V):
@@ -124,13 +125,31 @@ def policy_refine(e, pe, l, V):
     for s in e.getStates():  
         max = -math.inf
         for a in e.getActions():
+            if a[0] == env.Rotation.none and s[0:2] != (5, 6): continue
             ex = expectation(e, s, a, V, pe, l)
+            print(s, a, ex)
             if ex > max:
                 max = ex
                 pi[s] = a
+        print("*" * 50)
+        print(s, max, pi[s])
+        print("-" * 50)
     return pi
 
-print(policy_refine(e, 0, 0.9, V))
+#policy_refine(e, 0, 0.9, V)
+#print(policy_refine(e, 0, 0.9, V))
 # 3(g)
 
-        
+def policyIteration(e, pe, l, pi0):
+    pip = pi0
+    pi = None
+    while pip != pi:
+        pi = pip
+        V = policy_eval(e, pi, pe, l)
+        pip = policy_refine(e, pe, l, V)
+    return pip
+
+# 3(h)
+pistar = policyIteration(e, 0, 0.9, pi0)
+#print(pistar)
+gen_traj(e, pistar, (1, 6, 6), 0)

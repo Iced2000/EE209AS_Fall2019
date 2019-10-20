@@ -142,4 +142,4 @@ class Environment(object):
 
 env = Environment(8, 8)
 
-print(env.step(0.5, (1, 1, 1), (Motion.forwards, Rotation.right)))
+#print(env.step(0.5, (1, 1, 1), (Motion.forwards, Rotation.right)))
