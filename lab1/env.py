@@ -146,7 +146,7 @@ class Environment(object):
         else:
             return 0
         
-    def set_opt(self, opt)
+    def set_opt(self, opt):
         self.opt = opt
 
 def gen_traj(e, pi, s0, pe):
