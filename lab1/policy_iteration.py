@@ -67,7 +67,7 @@ def policy_refine(e, pe, l, V):
     for s in e.getStates():  
         exmax = -np.Inf
         for a in e.getActions():
-            if a[0] == env.Rotation.none and s[0:2] != (5, 6): continue
+            if a[0] == env.Motion.none and s[0:2] != (5, 6): continue
             ex = env.expectation(e, s, a, V, pe, l)
             if ex > exmax:
                 exmax = ex
@@ -96,3 +96,7 @@ timer = env.Timer()
 timer.start()
 pistar = policyIteration(e, 0, 0.9, pi0)
 timer.end()
+
+# 5(a)
+pistar = policyIteration(e, 0.25, 0.9, pi0)
+env.gen_traj(e, pistar, (1, 6, 6), 0.25)
