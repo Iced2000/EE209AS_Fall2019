@@ -220,3 +220,7 @@ class Timer(object):
     def end(self):
         t = time.time() - self.startTime
         print("Time Usage: {} sec".format(t))
+
+e = Environment(8,8)
+e.set_opt(True)
+print(e.reward((5,6,4)))

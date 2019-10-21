@@ -36,7 +36,7 @@ for s in e.getStates():
     pi0[s] = (m, r)
 
 # 3(b)
-# find gen_traj() in env.py
+# you can gen_traj() in env.py
 
 # 3(c)
 tr = env.gen_traj(e, pi0, (1, 6, 6), 0)
@@ -95,8 +95,19 @@ env.gen_traj(e, pistar, (1, 6, 6), 0)
 timer = env.Timer()
 timer.start()
 pistar = policyIteration(e, 0, 0.9, pi0)
-timer.end()
+timer.end() 
 
 # 5(a)
+pistar = policyIteration(e, 0.25, 0.9, pi0)
+# test with pe = 0.25
+env.gen_traj(e, pistar, (1, 6, 6), 0.25)
+# test with pe = 0 and compare with 3(h)
+env.gen_traj(e, pistar, (1, 6, 6), 0)
+
+# 5(b)
+e.set_opt(True)
+pistar = policyIteration(e, 0, 0.9, pi0)
+env.gen_traj(e, pistar, (1, 6, 6), 0)
+
 pistar = policyIteration(e, 0.25, 0.9, pi0)
 env.gen_traj(e, pistar, (1, 6, 6), 0.25)
