@@ -141,7 +141,7 @@ class Environment(object):
             return -100
         elif s[0] == 3 and 6 >= s[1] >= 4:
             return -10
-        elif s[0] == 5 and s[1] == 6 and ((self.opt and s[2] == 6) or ~self.opt):
+        elif s[0] == 5 and s[1] == 6 and ((self.opt and s[2] == 6) or self.opt is False):
             return 1
         else:
             return 0
