@@ -1,5 +1,8 @@
 import numpy as np
 from enum import Enum
+import pygame
+import math
+import time
 
 class Motion(Enum):
     none = 0
@@ -141,8 +144,74 @@ class Environment(object):
         else:
             return 0
 
-env = Environment(8, 8)
+def gen_traj(e, pi, s0, pe):
+    s = s0
+    traj = [s[0:2]]
+    while s[0:2] != (5, 6):
+        a = pi[s]
+        s = e.step(pe, s, a)
+        print(s)
+        traj.append(s)
+    plotTraj(traj)
+    return traj
 
-#for s in env.getStates():
-#    for a in env.getActions():
-#        print(s, a, env.step(0, s, a))
+def expectation(e, s, a, V, pe, l):
+    ex = 0
+    for sp in e.getNextStateCandi(s, a):
+        ex += e.transProb(pe, s, a, sp) * (e.reward(sp) + l * V[sp])
+    return ex
+
+def plotTraj(traj):
+    def drawArrow(start, end, color):
+        pygame.draw.line(screen, (color, 0, 0), start, end, 5)
+        rtt = math.degrees(math.atan2(start[1] - end[1], end[0] - start[0])) + 90
+        pygame.draw.polygon(screen, (color, 0, 0), 
+            ((end[0] + 15 * math.sin(math.radians(rtt)),
+              end[1] + 15 * math.cos(math.radians(rtt))),
+             (end[0] + 15 * math.sin(math.radians(rtt - 120)),
+              end[1] + 15 * math.cos(math.radians(rtt - 120))),
+             (end[0] + 15 * math.sin(math.radians(rtt + 120)),
+              end[1] + 15 * math.cos(math.radians(rtt + 120)))))
+
+    def adjustXY(xy):
+        return (xy[0] * 100 + 50, 750 - xy[1] * 100)
+
+    pygame.init()
+    screen = pygame.display.set_mode([800, 800])
+    
+    done = False
+    clock = pygame.time.Clock()
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+        
+        # draw grid
+        screen.fill((255, 255, 255))
+        for i in range(0, 801, 100):
+            pygame.draw.line(screen, (0, 0, 0), (i, 0), (i, 800), 3)
+            pygame.draw.line(screen, (0, 0, 0), (0, i), (800, i), 3)
+        
+        # plot trajectory
+        colorDiff = abs(255/len(traj)) / 2
+        for i in range(1, len(traj)):
+            drawArrow(adjustXY(traj[i-1]), adjustXY(traj[i]), 100 + colorDiff * i)
+        
+        clock.tick(15)
+        pygame.display.flip()
+
+    pygame.quit()
+    return
+
+class Timer(object):
+    """docstring for Timer"""
+    def __init__(self):
+        super(Timer, self).__init__()
+        self.startTime = 0
+
+    def start(self):
+        self.startTime = time.time()
+
+    def end(self):
+        t = time.time() - self.startTime
+        print("Time Usage: {} sec".format(t))
