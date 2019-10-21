@@ -20,6 +20,8 @@ class Environment(object):
         super(Environment, self).__init__()
         self.L = L
         self.W = W
+        # option for 5(b), false means normal, true means reward +1 only applies when clk=6
+        self.opt = False
 
         # initiaizing state
         self.state = []
@@ -139,10 +141,13 @@ class Environment(object):
             return -100
         elif s[0] == 3 and 6 >= s[1] >= 4:
             return -10
-        elif s[0] == 5 and s[1] == 6:
+        elif s[0] == 5 and s[1] == 6 and (selp.opt and s[2] == 6) or ~self.opt):
             return 1
         else:
             return 0
+        
+    def set_opt(self, opt)
+        self.opt = opt
 
 def gen_traj(e, pi, s0, pe):
     s = s0
