@@ -8,7 +8,7 @@ The first lab: MDP and policy/value iteration is done
 
 # Dependencies
 
-This code is based on python 3.5, but it also works with python 2.7. 
+This code is based on python 3.5 above. 
 
 The code requires installation of following packages:
 
