@@ -35,7 +35,7 @@ for s in e.getStates():
     else:
         r = env.Rotation.right
     
-    pi0[s] = (m, r)
+    pi0[s] = (m, r) # initial policy
 
 # 3(b)
 def gen_traj(e, pi, s0, pe):
