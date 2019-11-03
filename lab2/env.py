@@ -11,15 +11,7 @@ class Robot():
         self.x = 0              # center x,y & orientation
         self.y = 0
         self.orientation = 0
-        self.leftSpeed = 0
-        self.rightSpeed = 0
         self.maxSpeed = 2 * math.pi * self.r       # wheel speed 1 revolution/s = 60 RPM
-    
-    def setLeftSpeed(self, speed):
-        self.leftSpeed = speed
-    
-    def setRightSpeed(self, speed):
-        self.rightSpeed = speed
     
     def setx(self, x):
         self.x = x
@@ -27,45 +19,29 @@ class Robot():
     def sety(self, y):
         self.y = y
     
-    def computeMove(self, x, y):
+    def computeMove(self, x, y, theta, k1, k2, k3, t):
         dx = x - self.x
         dy = y - self.y
-        dr = math.sqrt(pow(dx, 2) + pow(dy, 2))
+        dr = math.sqrt(dx**2 + dy**2)
         if dr == 0 :
             print('stay still')
             return
         pi = math.pi
-        angle = math.atan2(dy, dx) - self.orientation
-        angle = angle % (2 * pi)
-        forward = True
-        if angle > pi / 2 and angle < pi * 3 / 2:   # rotate less and move backward 
-            angle = angle - pi
-            forward = False
-        elif angle > pi * 3 / 2 :
-            angle = angle - 2 * pi
-
-        # if angle == 0:
-        #     self.leftSpeed = 0
-        #     self.rightSpeed = 0
-        # if angle > 0:
-        #     self.leftSpeed = -self.maxSpeed
-        #     self.rightSpeed = self.maxSpeed
-        # else:
-        #     self.leftSpeed = self.maxSpeed
-        #     self.rightSpeed = -self.maxSpeed
-
-        # timeRotate = (abs(angle) * self.w / 2) / self.maxSpeed
-
-        # if forward :
-        #     self.leftSpeed = self.maxSpeed
-        #     self.rightSpeed = self.maxSpeed
-        # else:
-        #     self.leftSpeed = self.-maxSpeed
-        #     self.rightSpeed = self.-maxSpeed
+        angle1 = (math.atan2(dy, dx) - self.orientation + pi) % (2 * pi) - pi
+        angle2 = (theta - self.orientation - angle1 + pi) % (2 * pi) - pi
+        v = k1 * dr
+        if angle1 > pi/2 or angle1 < - pi/2:
+            v = -v 
+        omega = k2 * angle1 + k3 * angle2
+        # compute the control inputs
+        omegaRight =  (2 * v + omega * self.w) / (2 * self.r)
+        omegaLeft =  (2 * v - omega * self.w) / (2 * self.r)
+        # move and set new x,y,ori..
+        self.orientation = self.orientation + omega * t
+        self.x = self.x + v * math.cos(self.orientation) * t
+        self.y = self.y + v * math.sin(self.orientation) * t
         
-        # timeTranslate = dr / self.maxSpeed
-
-        return dr, angle, forward
+        return omegaLeft, omegaRight
 
 class Environment():
 
