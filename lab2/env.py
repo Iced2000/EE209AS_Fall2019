@@ -22,16 +22,16 @@ class Robot():
     def setOrientation(self, o):
         self.orientation = o
     
-    def computeMove(self, x, y, theta, k1, k2, k3, t):
-        dx = x - self.x
-        dy = y - self.y
+    def computeMove(self, target, k1, k2, k3, t):
+        dx = target[0] - self.x
+        dy = target[1] - self.y
         dr = math.sqrt(dx**2 + dy**2)
         if dr == 0 :
             print('stay still')
             return
         pi = math.pi
         angle1 = (math.atan2(dy, dx) - self.orientation + pi) % (2 * pi) - pi
-        angle2 = (theta - self.orientation - angle1 + pi) % (2 * pi) - pi
+        angle2 = (target[2] - self.orientation - angle1 + pi) % (2 * pi) - pi
         v = k1 * dr
         if angle1 > pi/2 or angle1 < - pi/2:
             v = -v 
@@ -44,7 +44,7 @@ class Robot():
         self.x = self.x + v * math.cos(self.orientation) * t
         self.y = self.y + v * math.sin(self.orientation) * t
         
-        return omegaLeft, omegaRight
+        return (omegaLeft, omegaRight)
 
 class Environment():
 
@@ -99,15 +99,18 @@ class Environment():
         while self.colDetect(self.init):
             print('initial state has potential risk of collision, reset to random !')
             self.init = (self.W * random.random(), self.L * random.random(), 2 * math.pi * random.random() - math.pi)
+        self.robot.setx(self.init[0])
+        self.robot.sety(self.init[1])
+        self.robot.setOrientation(self.init[2])
 
-    def genTraj(self):                                                  # should include RRT here and get a traj
+    def genTraj(self):                                                 
         traj = []
         return traj
 
-obs = []
-obs.append((5,5,1,1))
-obs.append((2,2,1,1))
-target = (8, 8, math.pi)
-e = Environment(10, 10)
-controlInputs = e.robot.computeMove(e.target[0], e.target[1], e.target[2], 0.3, 1.5, -0.3, 0.1)
-print('1')
+# obs = []
+# obs.append((5,5,1,1))
+# obs.append((2,2,1,1))
+# target = (8, 8, math.pi)
+# e = Environment(10, 10)
+# controlInputs = e.robot.computeMove(e.target, 0.3, 1.5, -0.3, 0.1)
+# print('1')
