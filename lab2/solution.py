@@ -3,28 +3,26 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-e = env.Environment(100, 100)
-e.setTarget((80, 80, 0))
-e.setInit((10, 10, math.pi/2))
+e = env.Environment(1000, 1000)
+e.setTarget((800, 700, 0))
+e.setInit((300, 200, math.pi/2))
 
-# e.trajGen(e.init, e.target, 1, 0.05, 0.3, 1.5, -0.3)        # k1,k2,k3 need to be modified
+# e.trajGen(e.init, e.target, 1, 0.05, 0.3, 1.5, -0.3, plot = True)        # k1,k2,k3 need to be modified
 
 obs = [
-    (0, 0, 10, 10),
-    (50, 0, 20, 20),
-    (70, 80, 20, 20),
-    (0, 30, 30, 10),
-    (0, 70, 20, 10),
-    (80, 50, 20, 10),
+    (0, 0, 100, 100),
+    (500, 0, 200, 200),
+    (700, 800, 200, 200),
+    (0, 300, 300, 100),
+    (0, 700, 200, 100),
+    (800, 500, 200, 100),
     ]
 e.setObs(obs)
 
 # e.plotObs()
-goalRegion = [(50, 50, 10, 10)]
-
-
-
-
+goalRegion = (500, 500, 50, 10)
+e.setGoalRegion(goalRegion)
+vertices, traj = e.rrt()
 
 print('1')
 
