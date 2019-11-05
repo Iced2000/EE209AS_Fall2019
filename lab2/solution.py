@@ -1,9 +1,9 @@
-import env_jason
+import env
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-e = env_jason.Environment(1000, 1000)
+e = env.Environment(1000, 1000)
 e.setTarget((800, 700, 0))
 e.setInit((300, 200, math.pi/2))
 
