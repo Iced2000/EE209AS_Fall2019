@@ -147,7 +147,7 @@ class Environment():
             if not self.colDetect(rs):
                 return rs
 
-    def colDetect(self, state):
+    def state2corners(self, state):
         corners = np.zeros((5,2))
         theta1 = math.atan2(self.robot.w/2, 25)
         theta2 = math.atan2(self.robot.w/2, self.robot.l)
@@ -158,7 +158,10 @@ class Environment():
         corners[2] = [state[0] + rou2*math.cos(state[2]-theta2-math.pi), state[1] + rou2*math.sin(state[2]-theta2-math.pi)]
         corners[3] = [state[0] + rou2*math.cos(state[2]+theta2-math.pi), state[1] + rou2*math.sin(state[2]+theta2-math.pi)]
         corners[4] = corners[0]
-        
+        return corners
+
+    def colDetect(self, state):
+        corners = self.state2corners(state)
         for o in self.obs:
             # make sure four corners of the robot are outside the square.
             for i in range(4):
@@ -176,13 +179,24 @@ class Environment():
         return False
 
     def stateColDetect(self, state1, state2):
+
+        # traj = [state1]
+        # self.robot.setInit(state1)
+        # while np.linalg.norm(state2[0:2] - (self.robot.x, self.robot.y)) > 1 :
+        #     state, _ = self.robot.computeMove(state2, 0.3, 1.5, -0.3, 0.1)    # k1,k2,k3 needs to be modified later!!!
+        #     traj.append(state)
+        # return not self.trajColFree(traj)
+
         for o in self.obs:
             p1 = [o[0], o[1]]
             p2 = [o[0], o[1] + o[3]]
             p3 = [o[0] + o[2], o[1]]
             p4 = [o[0] + o[2], o[1] + o[3]]
-            if segment(state1[0:2], state2[0:2], p1, p4) or segment(state1[0:2], state2[0:2], p2, p3):
-                return True
+            corners1 = self.state2corners(state1)
+            corners2 = self.state2corners(state2)
+            for i in range(4):
+                if segment(corners1[i], corners2[i], p1, p4) or segment(corners1[i], corners2[i], p2, p3):
+                    return True
         return False
 
 
@@ -205,7 +219,7 @@ class Environment():
             self.init = self.genRandomState()
         self.robot.setInit(self.init)
 
-    def trajGen(self, init, target, tf, dt, k1, k2, k3, plot):
+    def trajGen(self, init, target, tf, dt, k1, k2, k3, plot = 0):
         t = 0
         controlInputs = []
         traj = [init]
@@ -250,7 +264,8 @@ class Environment():
             xrand = Vertex(self.genRandomState())
             xnearest = self.tree.findNearest(xrand)
             _, traj = self.trajGen(xnearest.state, xrand.state, 1, 0.1, 0.3, 1.5, -0.3, False)
-            if self.trajColFree(traj):
+            if self.trajColFree(traj) and traj[-1][0] > 0 \
+                and traj[-1][0] < self.W and traj[-1][1] > 0 and traj[-1][1] < self.L:
                 return Vertex(traj[-1]), xnearest
 
     def reconstructTree(self, nearVertices, xnew):
@@ -293,11 +308,11 @@ class Environment():
         while True:
             print(i)
             i += 1
-            xnew, xnearest = self.genNewAndNearest()
+            xnew, _ = self.genNewAndNearest()
             nearVertices = self.tree.getNearVertices(xnew)
 
             for _, nV in nearVertices:
-                if self.stateColDetect(nV.state, xnew.state): #???????
+                if not self.stateColDetect(nV.state, xnew.state): #???????
                     xnew.setParent(nV)
                     self.tree.addVertex(xnew)
                     break
@@ -307,7 +322,7 @@ class Environment():
                 break
         return self.tree, xnew
 
-    def plotTree(self):
+    def plotTree(self, x = None):
         fig = plt.figure()
         ax = fig.gca()
         for ob in self.obs:
@@ -315,15 +330,25 @@ class Environment():
             ax.add_patch(obstacle)
         goalRegion = plt.Rectangle(self.goalRegion[0:2], self.goalRegion[2], self.goalRegion[3], color = 'y')
         ax.add_patch(goalRegion)
-        plt.xlim([0, self.W])
-        plt.ylim([0, self.L])
+        plt.xlim([0-10, self.W+10])
+        plt.ylim([0-10, self.L+10])
 
         for v in self.tree.v:
             if v != self.tree.root:
                 x1, y1 = v.state[0], v.state[1]
-                _, p = v.parent
+                _ , p = v.parent
                 x2, y2 = p.state[0], p.state[1]
                 plt.plot([x1, x2], [y1, y2], color = 'g')
+        if x != None:
+            traj = []
+            while x.parent != None:
+                _, x = x.parent
+                traj.append(x.state)
+            traj.reverse()
+            trajArray = np.reshape(traj, [len(traj), 3])
+            plt.plot(trajArray[:, 0], trajArray[:, 1], color = 'r')
+            plt.arrow(self.init[0], self.init[1], np.cos(self.init[2]), np.sin(self.init[2]), color='b', width=5)
+
         plt.show()
 
 # obs = []
