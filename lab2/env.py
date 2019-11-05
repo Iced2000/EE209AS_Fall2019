@@ -97,20 +97,49 @@ class Environment():
         self.robot.setInit(self.init)
 
     def colDetect(self, state):
-        # make sure four corners of the robot are safe.
-        corners = np.zeros((4,2))
+        corners = np.zeros((5,2))
         theta1 = math.atan2(self.robot.w/2, 25)
         theta2 = math.atan2(self.robot.w/2, self.robot.l)
         rou1 = math.sqrt((self.robot.w/2)**2 + 25**2)
         rou2 = math.sqrt((self.robot.w/2)**2 + self.robot.l**2)
-        corners[0]= [state[0] + rou1*math.cos(state[2]-theta1), state[1] + rou1*math.sin(state[2]-theta1)]
-        corners[1]= [state[0] + rou1*math.cos(state[2]+theta1), state[1] + rou1*math.sin(state[2]+theta1)]
-        corners[2]= [state[0] + rou2*math.cos(state[2]-theta2), state[1] + rou2*math.sin(state[2]-theta2)]
-        corners[3]= [state[0] + rou2*math.cos(state[2]+theta2), state[1] + rou2*math.sin(state[2]+theta2)]
+        corners[0] = [state[0] + rou1*math.cos(state[2]-theta1), state[1] + rou1*math.sin(state[2]-theta1)]
+        corners[1] = [state[0] + rou1*math.cos(state[2]+theta1), state[1] + rou1*math.sin(state[2]+theta1)]
+        corners[2] = [state[0] + rou2*math.cos(state[2]-theta2-math.pi), state[1] + rou2*math.sin(state[2]-theta2-math.pi)]
+        corners[3] = [state[0] + rou2*math.cos(state[2]+theta2-math.pi), state[1] + rou2*math.sin(state[2]+theta2-math.pi)]
+        corners[4] = corners[0]
+
+        def cross(p1, p2, p3):
+            x1 = p2[0] - p1[0]
+            y1 = p2[1] - p1[1]
+            x2 = p3[0] - p1[0]
+            y2 = p3[1] - p1[1]
+            return  x1 * y2 - x2 * y1     
+
+        def segment(p1, p2, p3, p4): 
+            if max(p1[0], p2[0]) >= min(p3[0], p4[0]) and max(p3[0], p4[0])>=min(p1[0], p2[0]) \
+                and max(p1[1], p2[1]) >= min(p3[1], p4[1]) and max(p3[1], p4[1]) >= min(p1[1], p2[1]):
+                if cross(p1, p2, p3) * cross(p1, p2, p4) <= 0 \
+                    and cross(p3, p4, p1) * cross(p3, p4, p2) <= 0 :
+                    return True
+                else:
+                    return False
+            else: 
+                return False
+        
         for o in self.obs:
+            # make sure four corners of the robot are outside the square.
             for i in range(4):
                 if abs(corners[i][0] - o[0] - o[2]/2) < o[2]/2 and abs(corners[i][1] - o[1] - o[3]/2) < o[3]/2 :
                     return True
+            # make sure none of the edge of the robot intersects the diagonal of the obstacle square.
+            p1 = [o[0], o[1]]
+            p2 = [o[0], o[1] + o[3]]
+            p3 = [o[0] + o[2], o[1]]
+            p4 = [o[0] + o[2], o[1] + o[3]]
+            for i in range(4):
+                if segment(corners[i], corners[i+1], p1, p4) or segment(corners[i], corners[i+1], p2, p3):
+                    return True
+
         return False
 
     def setObs(self, obs):
@@ -144,8 +173,8 @@ class Environment():
             t = t + dt
         if plot :
             plt.figure()
-            plt.arrow(init[0], init[1], np.cos(init[2]), np.sin(init[2]), color='r', width=1)
-            plt.arrow(target[0], target[1], np.cos(target[2]), np.sin(target[2]), color='g', width=1)
+            plt.arrow(init[0], init[1], np.cos(init[2]), np.sin(init[2]), color='r', width=5)
+            plt.arrow(target[0], target[1], np.cos(target[2]), np.sin(target[2]), color='g', width=5)
             trajArray = np.reshape(traj, [len(traj), 3])
             plt.plot(trajArray[:, 0], trajArray[:, 1])
             plt.ylim([0, self.L])
@@ -181,6 +210,8 @@ class Environment():
         for ob in self.obs:
             obstacle = plt.Rectangle(ob[0:2], ob[2], ob[3], color = 'k')
             ax.add_patch(obstacle)
+        goalRegion = plt.Rectangle(self.goalRegion[0:2], self.goalRegion[2], self.goalRegion[3], color = 'y')
+        ax.add_patch(goalRegion)
         plt.xlim([0, self.W])
         plt.ylim([0, self.L])
 
@@ -196,19 +227,25 @@ class Environment():
                 if abs(xnew.state[0] - self.goalRegion[0] - self.goalRegion[2]/2) < self.goalRegion[2]/2 \
                 and abs(xnew.state[1] - self.goalRegion[1] - self.goalRegion[3]/2) < self.goalRegion[3]/2:
                     break
-        plt.show()
         traj = [xnew.state]
         x = xnew
         while x.parent != None:
             x = x.parent
             traj.append(x.state)
         traj.reverse()
+        trajArray = np.reshape(traj, [len(traj), 3])
+        plt.plot(trajArray[:, 0], trajArray[:, 1], color = 'r')
+        plt.arrow(self.init[0], self.init[1], np.cos(self.init[2]), np.sin(self.init[2]), color='b', width=5)
+
+        plt.show()
         return  vertices, traj
 
 # obs = []
-# obs.append((5,5,1,1))
+# obs.append((0,0,100,100))
 # obs.append((2,2,1,1))
 # target = (8, 8, math.pi)
-# e = Environment(10, 10)
+# e = Environment(1000, 1000)
+# e.setObs(obs)
+# print(e.colDetect((100, 146, -math.pi/10)))
 # state, controlInputs = e.robot.computeMove(e.target, 0.3, 1.5, -0.3, 0.1)
 # print('1')
