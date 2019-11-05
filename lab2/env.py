@@ -3,6 +3,24 @@ import math
 import random
 import matplotlib.pyplot as plt
 
+def cross(p1, p2, p3):
+    x1 = p2[0] - p1[0]
+    y1 = p2[1] - p1[1]
+    x2 = p3[0] - p1[0]
+    y2 = p3[1] - p1[1]
+    return  x1 * y2 - x2 * y1    
+
+def segment(p1, p2, p3, p4): 
+    if max(p1[0], p2[0]) >= min(p3[0], p4[0]) and max(p3[0], p4[0])>=min(p1[0], p2[0]) \
+        and max(p1[1], p2[1]) >= min(p3[1], p4[1]) and max(p3[1], p4[1]) >= min(p1[1], p2[1]):
+        if cross(p1, p2, p3) * cross(p1, p2, p4) <= 0 \
+            and cross(p3, p4, p1) * cross(p3, p4, p2) <= 0 :
+            return True
+        else:
+            return False
+    else: 
+        return False
+
 class Vertex():
     def __init__(self, state):
         self.state = state
@@ -107,24 +125,6 @@ class Environment():
         corners[2] = [state[0] + rou2*math.cos(state[2]-theta2-math.pi), state[1] + rou2*math.sin(state[2]-theta2-math.pi)]
         corners[3] = [state[0] + rou2*math.cos(state[2]+theta2-math.pi), state[1] + rou2*math.sin(state[2]+theta2-math.pi)]
         corners[4] = corners[0]
-
-        def cross(p1, p2, p3):
-            x1 = p2[0] - p1[0]
-            y1 = p2[1] - p1[1]
-            x2 = p3[0] - p1[0]
-            y2 = p3[1] - p1[1]
-            return  x1 * y2 - x2 * y1     
-
-        def segment(p1, p2, p3, p4): 
-            if max(p1[0], p2[0]) >= min(p3[0], p4[0]) and max(p3[0], p4[0])>=min(p1[0], p2[0]) \
-                and max(p1[1], p2[1]) >= min(p3[1], p4[1]) and max(p3[1], p4[1]) >= min(p1[1], p2[1]):
-                if cross(p1, p2, p3) * cross(p1, p2, p4) <= 0 \
-                    and cross(p3, p4, p1) * cross(p3, p4, p2) <= 0 :
-                    return True
-                else:
-                    return False
-            else: 
-                return False
         
         for o in self.obs:
             # make sure four corners of the robot are outside the square.
@@ -140,6 +140,27 @@ class Environment():
                 if segment(corners[i], corners[i+1], p1, p4) or segment(corners[i], corners[i+1], p2, p3):
                     return True
 
+        return False
+
+    def stateColDetect(self, state1, state2):
+        corners = np.zeros((2,5,2))
+        theta1 = math.atan2(self.robot.w/2, 25)
+        theta2 = math.atan2(self.robot.w/2, self.robot.l)
+        rou1 = math.sqrt((self.robot.w/2)**2 + 25**2)
+        rou2 = math.sqrt((self.robot.w/2)**2 + self.robot.l**2)
+        for i, state in enumerate([state1, state2]):
+            corners[i][0] = [state[0] + rou1*math.cos(state[2]-theta1), state[1] + rou1*math.sin(state[2]-theta1)]
+            corners[i][1] = [state[0] + rou1*math.cos(state[2]+theta1), state[1] + rou1*math.sin(state[2]+theta1)]
+            corners[i][2] = [state[0] + rou2*math.cos(state[2]-theta2-math.pi), state[1] + rou2*math.sin(state[2]-theta2-math.pi)]
+            corners[i][3] = [state[0] + rou2*math.cos(state[2]+theta2-math.pi), state[1] + rou2*math.sin(state[2]+theta2-math.pi)]
+            corners[i][4] = corners[i][0]
+        
+        # none of the edges intersects
+        for i in range(4):
+            for j in range(4):
+                if segment(corners[0][i], corners[0][i+1], corners[1][j], corners[1][j+1]):
+                    return True
+        
         return False
 
     def setObs(self, obs):
@@ -247,5 +268,7 @@ class Environment():
 # e = Environment(1000, 1000)
 # e.setObs(obs)
 # print(e.colDetect((100, 146, -math.pi/10)))
+# print(e.stateColDetect((75, 45, 0), (75, 145, 0)))
+# print(e.stateColDetect((75, 45, 0), (75, 135, -math.pi/10)))
 # state, controlInputs = e.robot.computeMove(e.target, 0.3, 1.5, -0.3, 0.1)
 # print('1')
